@@ -1,8 +1,8 @@
-class CreateAuthentications < ActiveRecord::Migration
-  class User < ActiveRecord::Base
+class CreateAuthentications < ActiveRecord::Migration[4.2]
+  class User < ApplicationRecord
   end
 
-  class Authentication < ActiveRecord::Base
+  class Authentication < ApplicationRecord
   end
 
   def up
@@ -31,7 +31,7 @@ class CreateAuthentications < ActiveRecord::Migration
 
     Authentication.find_each do |auth|
       user = User.where(id: auth.user_id).first
-      user.update_attributes(provider: auth.provider, uid: auth.uid) if user
+      user&.update_attributes(provider: auth.provider, uid: auth.uid)
     end
 
     drop_table :authentications

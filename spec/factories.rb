@@ -1,8 +1,8 @@
 FactoryBot.define do
   factory :user do
-    name { "#{Faker::Name.first_name.gsub("'", "")} #{Faker::Name.last_name.gsub("'", "")}" }
+    name { "#{Faker::Name.first_name.delete("'")} #{Faker::Name.last_name.delete("'")}" }
     sequence(:email) { |n| "example#{n}@example.com" }
-    username { "#{name[0..3]}_#{Faker::Internet.domain_word}"}
+    username { "#{name[0..3]}_#{Faker::Internet.domain_word}" }
 
     factory :member do
       state { "member" }
@@ -23,7 +23,7 @@ FactoryBot.define do
     end
 
     factory :key_member do
-      state { 'key_member' }
+      state { "key_member" }
     end
 
     factory :voting_member do
@@ -45,6 +45,14 @@ FactoryBot.define do
     association :user, factory: :voting_member
     application
     value { false }
+
+    trait :yes do
+      value { true }
+    end
+
+    trait :no do
+      value { false }
+    end
   end
 
   factory :sponsorship do
@@ -93,7 +101,12 @@ FactoryBot.define do
   factory :comment do
     association :application, factory: :application
     association :user, factory: :member
-    body { 'comment body' }
+    body { "comment body" }
     created_at { 1.day.ago }
+  end
+
+  factory :door_code do
+    association :user, factory: :member
+    sequence(:code) { |n| "#{1000+n}" }
   end
 end

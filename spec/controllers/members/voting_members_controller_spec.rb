@@ -6,8 +6,7 @@ describe Members::VotingMembersController do
   let(:member) { create :member }
 
   describe "get edit" do
-
-    let(:subject) { get :edit, user_id: member }
+    let(:subject) { get :edit, params: { user_id: member } }
 
     it_should_behave_like "deny non-members", [:visitor, :applicant]
     it_should_behave_like "allow members", [:member, :key_member]
@@ -17,14 +16,14 @@ describe Members::VotingMembersController do
 
       it "allows members to load the status edit form" do
         subject
-        expect(response).to be_success
+        expect(response).to be_successful
         expect(response).to render_template :edit
       end
     end
   end
 
   describe "post update" do
-    let(:subject) { patch :update, user_id: member }
+    let(:subject) { patch :update, params: { user_id: member } }
 
     it_should_behave_like "deny non-members", [:visitor, :applicant]
     it_should_behave_like "allow members", [:member, :key_member]
@@ -33,15 +32,17 @@ describe Members::VotingMembersController do
       before { login_as member }
 
       context "with the agreement boxes checked" do
-        let(:params) { {
-          "user_id" => member.id,
-          "agreements" => {
-            "confidentiality" => "1", "attended_training" => "1", "policy_agreement" => "1",
-            "time_commitment" => "1", "voting_principles" => "1", "hard_conversations" => "1"
+        let(:params) {
+          {
+            "user_id" => member.id,
+            "agreements" => {
+              "confidentiality" => "1", "attended_training" => "1", "policy_agreement" => "1",
+              "time_commitment" => "1", "voting_principles" => "1", "hard_conversations" => "1"
+            }
           }
-        } }
+        }
 
-        let(:subject) { patch :update, params }
+        let(:subject) { patch :update, params: params }
 
         it "marks the member as having agreed to the voting member policies" do
           expect { subject }.to change { member.reload.voting_policy_agreement }.from(false).to(true)
@@ -55,12 +56,14 @@ describe Members::VotingMembersController do
       end
 
       context "with the agreement boxes unchecked" do
-        let(:params) { {
-          "user_id" => member.id,
-          "agreements" => { "confidentiality" => "1" }
-        } }
+        let(:params) {
+          {
+            "user_id" => member.id,
+            "agreements" => {"confidentiality" => "1"}
+          }
+        }
 
-        let(:subject) { patch :update, params }
+        let(:subject) { patch :update, params: params }
 
         it "does not set the voting policy agreement" do
           expect { subject }.not_to change { member.voting_policy_agreement }.from(false)

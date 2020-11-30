@@ -1,28 +1,14 @@
-require File.expand_path('../boot', __FILE__)
+require File.expand_path("../boot", __FILE__)
 
-# Pick the frameworks you want:
-require "active_record/railtie"
-require "action_controller/railtie"
-require "action_mailer/railtie"
-require "sprockets/railtie"
-# require "rails/test_unit/railtie"
+require "rails/all"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
-Bundler.require(:default, Rails.env)
+Bundler.require(*Rails.groups)
 
 module Doubleunion
   class Application < Rails::Application
-
-    # don't generate RSpec tests for views and helpers
-    config.generators do |g|
-
-      g.test_framework :rspec, fixture: true
-
-      g.view_specs false
-      g.helper_specs false
-    end
-
+    config.load_defaults 6.0
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration should go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded.
@@ -36,16 +22,17 @@ module Doubleunion
     # config.i18n.default_locale = :de
 
     # explicitly loading locales so they will be available in the initializers
-    I18n.load_path += Dir[Rails.root.join('config', 'locales', '**', '*.{rb,yml}')]
+    I18n.load_path += Dir[Rails.root.join("config", "locales", "**", "*.{rb,yml}")]
 
-    config.autoload_paths += %W(#{config.root}/lib)
+    config.eager_load_paths += %W[#{config.root}/lib]
+    config.autoload_paths += %W[#{config.root}/lib]
 
     # CORS – this allows doubleunion.org to request the api from javascript
-    config.middleware.insert_before 0, "Rack::Cors" do
+    config.middleware.insert_before 0, Rack::Cors do
       allow do
-        origins '*'
+        origins "*"
 
-        resource '/public_members', :headers => :any, :methods => [:get], :max_age => 0
+        resource "/public_members", headers: :any, methods: [:get], max_age: 0
       end
     end
   end

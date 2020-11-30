@@ -6,8 +6,7 @@ describe Members::KeyMembersController do
   let(:member) { create :member }
 
   describe "get edit" do
-
-    let(:subject) { get :edit, user_id: member }
+    let(:subject) { get :edit, params: { user_id: member } }
 
     it_should_behave_like "deny non-members", [:visitor, :applicant]
     it_should_behave_like "allow members", [:member, :voting_member]
@@ -17,14 +16,14 @@ describe Members::KeyMembersController do
 
       it "allows members to load the status edit form" do
         subject
-        expect(response).to be_success
+        expect(response).to be_successful
         expect(response).to render_template :edit
       end
     end
   end
 
   describe "post update" do
-    let(:subject) { patch :update, user_id: member }
+    let(:subject) { patch :update, params: { user_id: member } }
 
     it_should_behave_like "deny non-members", [:visitor, :applicant]
     it_should_behave_like "allow members", [:member, :voting_member]
@@ -33,12 +32,14 @@ describe Members::KeyMembersController do
       before { login_as member }
 
       context "with the agreement boxes checked" do
-        let(:params) { {
-          "user_id" => member.id,
-          "agreements" => { "attended_events" => "1", "kick_out"=>"1", "lock_up"=>"1", "take_action"=>"1" }
-        } }
+        let(:params) {
+          {
+            "user_id" => member.id,
+            "agreements" => {"attended_events" => "1", "kick_out" => "1", "lock_up" => "1", "take_action" => "1"}
+          }
+        }
 
-        let(:subject) { patch :update, params }
+        let(:subject) { patch :update, params: params }
 
         it "marks the member as a key member" do
           expect { subject }.to change { member.state }.from("member").to("key_member")
@@ -56,12 +57,14 @@ describe Members::KeyMembersController do
       end
 
       context "with the agreement boxes unchecked" do
-        let(:params) { {
-          "user_id" => member.id,
-          "agreements" => { "lock_up"=>"1", "take_action"=>"1" }
-        } }
+        let(:params) {
+          {
+            "user_id" => member.id,
+            "agreements" => {"lock_up" => "1", "take_action" => "1"}
+          }
+        }
 
-        let(:subject) { patch :update, params }
+        let(:subject) { patch :update, params: params }
 
         it "does not send any emails" do
           expect { subject }.not_to change { ActionMailer::Base.deliveries.count }

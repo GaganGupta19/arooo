@@ -1,4 +1,4 @@
-require 'spec_helper'
+require "spec_helper"
 
 describe User do
   describe "validations" do
@@ -22,43 +22,43 @@ describe User do
     end
   end
 
-  it 'should be in visitor state by default' do
-    expect(User.new.state).to eq('visitor')
+  it "should be in visitor state by default" do
+    expect(User.new.state).to eq("visitor")
   end
 
-  it 'should have profile after created' do
+  it "should have profile after created" do
     expect(User.new.profile).to be_nil
     expect(create(:user).profile).to be_an_instance_of(Profile)
   end
 
-  it 'should accept nested attributes for profile' do
+  it "should accept nested attributes for profile" do
     user = create(:user)
     expect(user.profile.twitter).to be_nil
     user.update_attributes!(profile_attributes: {
-        id: user.profile.id,
-        twitter: 'Horse_ebooks'
-      })
-    expect(user.profile.twitter).to eq('Horse_ebooks')
+      id: user.profile.id,
+      twitter: "Horse_ebooks"
+    })
+    expect(user.profile.twitter).to eq("Horse_ebooks")
   end
 
-  it 'should transition from visitor to applicant' do
+  it "should transition from visitor to applicant" do
     user = User.new
-    user.username = 'sallyride'
-    user.email = 'cat@example.org'
+    user.username = "sallyride"
+    user.email = "cat@example.org"
     user.save!
 
-    expect(user.state).to eq('visitor')
+    expect(user.state).to eq("visitor")
     user.make_applicant!
-    expect(user.state).to eq('applicant')
+    expect(user.state).to eq("applicant")
   end
 
-  it 'should not transition from visitor to member' do
+  it "should not transition from visitor to member" do
     user = User.new
-    user.username = 'sallyride'
-    user.email = 'cat@example.org'
+    user.username = "sallyride"
+    user.email = "cat@example.org"
     user.save!
 
-    expect(user.state).to eq('visitor')
+    expect(user.state).to eq("visitor")
     expect { user.make_member! }.to raise_error(StateMachine::InvalidTransition)
   end
 
@@ -69,6 +69,14 @@ describe User do
 
     it "should transition from member to former_member" do
       expect { subject }.to change { member.state }.from("member").to("former_member")
+    end
+
+    context "when member had enabled door code" do
+      let(:door_code) { create(:door_code, enabled: true, user: member) }
+
+      it "disables the door code" do
+        expect { subject }.to change { door_code.enabled }.from(true).to(false)
+      end
     end
   end
 
@@ -86,6 +94,15 @@ describe User do
 
       it "should remove voting member agreement status" do
         expect { subject }.to change { member.voting_policy_agreement }.from(true).to(false)
+      end
+    end
+
+    context "with a key member" do
+      let(:member) { create(:key_member) }
+      let(:door_code) { create(:door_code, enabled: true, user: member) }
+
+      it "disables their door code" do
+        expect { subject }.to change { door_code.enabled }.from(true).to(false)
       end
     end
   end
@@ -119,6 +136,17 @@ describe User do
 
     it "should transition from key member to voting member" do
       expect { subject }.to change { member.state }.from("key_member").to("voting_member")
+    end
+  end
+
+  describe "#door_code" do
+    subject { create(:user) }
+
+    it { is_expected.to have_one(:door_code) }
+
+    it "defaults to nil" do
+      new_user = User.create!(name: "Kay Doke", email: "k@example.com", username: "k")
+      expect(new_user.door_code).to be_nil
     end
   end
 end

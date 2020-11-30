@@ -1,11 +1,11 @@
 class Members::DuesController < Members::MembersController
-
   def show
     @user = current_user
 
     if current_user.stripe_customer_id
       customer = Stripe::Customer.retrieve(current_user.stripe_customer_id)
       @subscription = customer.subscriptions.first
+      @current_plan = amount_plan_name.fetch(@subscription.plan.amount, nil) if @subscription
     end
   end
 
@@ -40,12 +40,13 @@ class Members::DuesController < Members::MembersController
         subscription.plan = params[:plan]
         subscription.save
       else # subscription may have been canceled due to non-payment
-        customer.subscriptions.create({:plan => params[:plan]})
+        customer.subscriptions.create({plan: params[:plan]})
       end
 
     else
       stripe_customer = Stripe::Customer.create(
-        email: params[:email],
+        email: @user.email,
+        name: @user.name,
         plan: params[:plan],
         source: params[:token]
       )
@@ -53,8 +54,7 @@ class Members::DuesController < Members::MembersController
       current_user.update_attribute(:stripe_customer_id, stripe_customer.id)
     end
 
-    redirect_to redirect_target, :notice => "Your dues have been updated."
-
+    redirect_to redirect_target, notice: "Your dues have been updated."
   rescue Stripe::CardError => e
     flash[:error] = e.message
     redirect_to redirect_target
@@ -63,7 +63,7 @@ class Members::DuesController < Members::MembersController
   def scholarship_request
     DuesMailer.scholarship_requested(current_user, params[:reason]).deliver_now
 
-    redirect_to members_user_dues_path, :notice => "Your scholarship request has been submitted"
+    redirect_to members_user_dues_path, notice: "Your scholarship request has been submitted"
   end
 
   private
@@ -74,5 +74,19 @@ class Members::DuesController < Members::MembersController
     else
       members_user_dues_path(current_user)
     end
+  end
+
+  def amount_plan_name
+    { 10000 => "extra_large_monthly",
+      7500 => "75_monthly",
+      5000 => "large_monthly",
+      4500 => "45_monthly",
+      4000 => "40_monthly",
+      3500 => "35_monthly",
+      3000 => "30_monthly",
+      2500 => "medium_monthly",
+      2000 => "20_monthly",
+      1500 => "15_monthly",
+      1000 => "small_monthly" }
   end
 end

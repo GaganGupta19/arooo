@@ -1,5 +1,5 @@
 class AdminController < ApplicationController
-  before_filter :ensure_admin
+  before_action :ensure_admin
 
   def applications
     @to_approve = Application.to_approve
@@ -32,7 +32,7 @@ class AdminController < ApplicationController
   end
 
   def new_members
-    @new_members = User.new_members
+    @new_members = User.new_members.reorder(:last_stripe_charge_succeeded)
   end
 
   def setup_complete
@@ -52,10 +52,10 @@ class AdminController < ApplicationController
 
     respond_to do |format|
       if user.save
-        format.json { render json: { user_id: user.id } }
+        # format.json { render json: {user_id: user.id} }
         format.html { redirect_to admin_new_members_path, notice: "Note saved!" }
       else
-        format.json { render json: { user_id: user.id } }
+        # format.json { render json: {user_id: user.id} }
         format.html { redirect_to admin_new_members_path, notice: "Whoops! #{user.errors.full_messages.to_sentence}" }
       end
     end

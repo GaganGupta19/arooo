@@ -1,8 +1,12 @@
 class Admin::MembershipsController < ApplicationController
-  before_filter :ensure_admin
+  before_action :ensure_admin
 
   def index
-    @all_members = User.all_members.includes(:profile).order_by_state
+    @all_members = User
+      .all_members
+      .includes(:profile)
+      .includes(:door_code)
+      .order_by_state
 
     respond_to do |format|
       format.html
@@ -13,10 +17,10 @@ class Admin::MembershipsController < ApplicationController
   def update
     user = User.find(params[:id])
 
-    if user.update_attributes!(user_params)
-      flash[:message] = "#{user.name} updated."
+    flash[:message] = if user.update_attributes!(user_params)
+      "#{user.name} updated."
     else
-      flash[:message] = "Whoops! #{user.errors.full_messages.to_sentence}"
+      "Whoops! #{user.errors.full_messages.to_sentence}"
     end
 
     redirect_to admin_memberships_path
@@ -25,10 +29,12 @@ class Admin::MembershipsController < ApplicationController
   def change_membership_state
     user = User.find(params[:id])
 
-    if user.send("make_#{params[:user][:updated_state]}")
-      flash[:message] = "#{user.name} is now a #{user.state.humanize.downcase}."
+    action_method = user.method("make_#{params.dig(:user, :updated_state)}") rescue raise(NoMethodError)
+
+    flash[:message] = if action_method.call
+      "#{user.name} is now a #{user.state.humanize.downcase}."
     else
-      flash[:message] = "Whoops! #{user.errors.full_messages.to_sentence}"
+      "Whoops! #{user.errors.full_messages.to_sentence}"
     end
 
     redirect_to admin_memberships_path

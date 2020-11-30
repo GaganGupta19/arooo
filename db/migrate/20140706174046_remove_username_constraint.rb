@@ -1,5 +1,5 @@
-class RemoveUsernameConstraint < ActiveRecord::Migration
+class RemoveUsernameConstraint < ActiveRecord::Migration[4.2]
   def change
-    change_column_null :users, :username, :true
+    change_column_null :users, :username, true
   end
 end
